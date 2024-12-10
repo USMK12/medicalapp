@@ -18,36 +18,39 @@ class barchartState extends State<barchart> {
   late List<BarChartGroupData> rawBarGroups;
   late List<BarChartGroupData> showingBarGroups;
   int touchedGroupIndex = -1;
-  late List<dynamic> patientCount; // Declare patientCount here
+  late List<dynamic> patientCount;
+  double maxY = 10; // Initial default maxY value
 
   @override
   void initState() {
     super.initState();
-    // Call the function to fetch data from PHP script
     showingBarGroups = [];
     fetchDataFromPHP();
   }
 
-  // Function to fetch data from PHP script
+  // Function to fetch data from PHP backend
   void fetchDataFromPHP() async {
-    // Define the URL of your PHP script
     String url = graphurl;
-
-    // Make a POST request to the PHP script
     var response = await http.post(Uri.parse(url));
 
-    // Check if the request was successful (status code 200)
     if (response.statusCode == 200) {
-      // Parse the JSON response
       patientCount = json.decode(response.body);
 
-      // Prepare bar groups using fetched data
       List<BarChartGroupData> barGroups = [];
+      double maxCount = 0;
+
       for (var data in patientCount) {
+        double aliveCount = double.parse(data['alive_count'].toString());
+        double deadCount = double.parse(data['dead_count'].toString());
+
+        // Update maxCount to find the highest alive or dead value
+        if (aliveCount > maxCount) maxCount = aliveCount;
+        if (deadCount > maxCount) maxCount = deadCount;
+
         final barGroup = makeGroupData(
-          patientCount.indexOf(data) as int,
-          double.parse(data['alive_count'].toString()),
-          double.parse(data['dead_count'].toString()),
+          patientCount.indexOf(data),
+          aliveCount,
+          deadCount,
         );
         barGroups.add(barGroup);
       }
@@ -55,9 +58,11 @@ class barchartState extends State<barchart> {
       setState(() {
         rawBarGroups = barGroups;
         showingBarGroups = rawBarGroups;
+
+        // Adjust the maximum y-axis value dynamically with some padding
+        maxY = (maxCount * 1.2).ceilToDouble(); // Adding 20% padding
       });
     } else {
-      // Print an error message if the request fails
       print('Failed to load patient data: ${response.statusCode}');
     }
   }
@@ -67,11 +72,11 @@ class barchartState extends State<barchart> {
     return Scaffold(
       appBar: AppBar(
         iconTheme: IconThemeData(
-          color : Colors.white,
+          color: Colors.white,
         ),
         title: Text(
-          'Home Page',
-          style: TextStyle(fontWeight: FontWeight.bold,color: Colors.white),
+          'Analysis',
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
         centerTitle: true,
         backgroundColor: appcolor,
@@ -80,7 +85,7 @@ class barchartState extends State<barchart> {
         child: Column(
           children: [
             Image.asset(
-              'assets/7616.jpg', // Replace 'your_image_asset.png' with your image asset path
+              'assets/7616.jpg', // Replace with your image asset path
               width: double.infinity,
               fit: BoxFit.scaleDown,
             ),
@@ -91,7 +96,7 @@ class barchartState extends State<barchart> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
-                    makeTransactionsIcon(),    
+                    makeTransactionsIcon(),
                     const Text(
                       'Bar Chart',
                       style: TextStyle(color: Colors.black, fontSize: 22),
@@ -100,12 +105,10 @@ class barchartState extends State<barchart> {
                     Expanded(
                       child: BarChart(
                         BarChartData(
-                          maxY: 10,
+                          maxY: maxY, // Dynamic maxY value based on data
                           barTouchData: BarTouchData(
                             touchTooltipData: BarTouchTooltipData(
-                              getTooltipColor: ((group) {
-                                return Colors.grey;
-                              }),
+                              getTooltipColor: (group) => Colors.grey,
                               getTooltipItem: (a, b, c, d) => null,
                             ),
                             touchCallback: (FlTouchEvent event, response) {
@@ -116,9 +119,8 @@ class barchartState extends State<barchart> {
                                 });
                                 return;
                               }
-            
                               touchedGroupIndex = response.spot!.touchedBarGroupIndex;
-            
+
                               setState(() {
                                 if (!event.isInterestedForInteractions) {
                                   touchedGroupIndex = -1;
@@ -133,10 +135,8 @@ class barchartState extends State<barchart> {
                                     sum += rod.toY;
                                   }
                                   final avg = sum /
-                                      showingBarGroups[touchedGroupIndex]
-                                          .barRods
-                                          .length;
-            
+                                      showingBarGroups[touchedGroupIndex].barRods.length;
+
                                   showingBarGroups[touchedGroupIndex] =
                                       showingBarGroups[touchedGroupIndex].copyWith(
                                     barRods: showingBarGroups[touchedGroupIndex]
@@ -170,7 +170,7 @@ class barchartState extends State<barchart> {
                               sideTitles: SideTitles(
                                 showTitles: true,
                                 reservedSize: 35,
-                                interval: 1,
+                                interval: maxY / 5, // Dynamic interval
                                 getTitlesWidget: leftTitles,
                               ),
                             ),
@@ -196,41 +196,28 @@ class barchartState extends State<barchart> {
     );
   }
 
+  // Widget to create left axis titles based on values
   Widget leftTitles(double value, TitleMeta meta) {
-  const style = TextStyle(
-    color: Color(0xff7589a2),
-    fontWeight: FontWeight.bold,
-    fontSize: 14,
-  );
+    const style = TextStyle(
+      color: Color(0xff7589a2),
+      fontWeight: FontWeight.bold,
+      fontSize: 14,
+    );
 
-  // Adjust the interval to increase the distance between values
-  int displayValue = value.toInt() + 1; // Add 1 to start from 1 instead of 0
-  
-  if (displayValue > 10) {
-    // Return an empty container for values greater than 10
-    return Container();
+    // Display only whole numbers
+    return SideTitleWidget(
+      axisSide: meta.axisSide,
+      space: 5,
+      child: Text(value.toInt().toString(), style: style),
+    );
   }
 
-  return SideTitleWidget(
-    axisSide: meta.axisSide,
-    space: 5,
-    child: Text(displayValue.toString(), style: style),
-  );
-}
-
-
-
-
+  // Widget to create bottom axis titles based on the score ranges
   Widget bottomTitles(double value, TitleMeta meta, List<dynamic> patientCount) {
-    // Modify this method to display the score values
-    // Assuming 'value' represents the index of the score in the list
-    // 'patientCount', you can use this index to fetch the corresponding
-    // score value.
-    // Replace 'patientCount' with your actual list name.
-    String scoreValue = patientCount[value.toInt()]['score'].toString();
+    String scoreRange = patientCount[value.toInt()]['score_range'].toString();
 
     final Widget text = Text(
-      scoreValue,
+      scoreRange,
       style: const TextStyle(
         color: Color(0xff7589a2),
         fontWeight: FontWeight.bold,
@@ -240,11 +227,12 @@ class barchartState extends State<barchart> {
 
     return SideTitleWidget(
       axisSide: meta.axisSide,
-      space: 16, //margin top
+      space: 16,
       child: text,
     );
   }
 
+  // Function to generate bar data for each group (alive and dead counts)
   BarChartGroupData makeGroupData(int x, double y1, double y2) {
     return BarChartGroupData(
       barsSpace: 4,
@@ -264,6 +252,7 @@ class barchartState extends State<barchart> {
     );
   }
 
+  // Icon widget for the header
   Widget makeTransactionsIcon() {
     const width = 4.5;
     const space = 3.5;

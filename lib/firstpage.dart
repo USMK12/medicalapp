@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:medicalapp/doctorlogin.dart';
 import 'package:medicalapp/ip.dart';
+import 'package:medicalapp/loginselection.dart';
 
 class beforefirst extends StatefulWidget {
   const beforefirst({Key? key}) : super(key: key);
@@ -13,11 +14,11 @@ class _beforefirstState extends State<beforefirst> {
   @override
   void initState() {
     super.initState();
-    // Delay navigation to DoctorLogin page after 3 seconds
+    
     Future.delayed(Duration(seconds: 2), () {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => DoctorLogin()), // Navigating to the Login screen
+        MaterialPageRoute(builder: (context) => loginselection()), 
       );
     });
   }

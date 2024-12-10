@@ -1,14 +1,9 @@
 <?php
+include 'conn.php';
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Establish the database connection
-    $servername = "localhost";
-    $username_db = "root";
-    $password_db = "";
-    $dbname = "braindata";
-    $conn = new mysqli($servername, $username_db, $password_db, $dbname);
-    if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
-    }
+    
     // Query to fetch all patient details
     $sql = "SELECT pid, firstname, profilepic FROM patientdata LIMIT 3;
     "; // Corrected table name

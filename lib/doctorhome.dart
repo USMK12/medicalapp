@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:medicalapp/doctorlogin.dart';
 import 'dart:convert';
 
 import 'package:medicalapp/ip.dart';
+import 'package:medicalapp/loginselection.dart';
 import 'package:medicalapp/uploadimage.dart';
 import 'package:medicalapp/viewprofile.dart';
 
@@ -25,7 +27,7 @@ class MyWidget extends StatelessWidget {
     return Container(
       width: 230,
       height: 120,
-      margin: EdgeInsets.only(left: 30, top: 5, right: 30, bottom: 10),
+      margin: EdgeInsets.only(left: 10, top: 5, right: 10, bottom: 10),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(25),
         boxShadow: [
@@ -50,7 +52,7 @@ class MyWidget extends StatelessWidget {
             child: CircleAvatar(
               radius: 30,
               backgroundColor: Colors.transparent,
-              backgroundImage: NetworkImage("http://" + ip + "/medicalapp/${profilepic}"),
+              backgroundImage: NetworkImage("http://" + ip + "/${profilepic}"),
             ),
           ),
           Column(
@@ -139,9 +141,9 @@ class _doctorhomeState extends State<doctorhome> {
   @override
   void initState() {
     super.initState();
-    // Update URL to the correct IP or domain with the enprofilepicoint for patient list
-    String url = "http://" + ip + "/medicalapp/doctorhome.php";
-    makeRequest(url);
+    
+    
+    makeRequest(doctorhomeurl);
   }
 
   Future<void> makeRequest(String url) async {
@@ -155,7 +157,7 @@ class _doctorhomeState extends State<doctorhome> {
       }
     } catch (e) {
       print('Error: $e');
-      // Handle error gracefully (e.g., show a snackbar)
+      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error loading patient data'),
@@ -167,19 +169,28 @@ class _doctorhomeState extends State<doctorhome> {
   void parseResponse(String responseBody) {
     List<dynamic> data = json.decode(responseBody);
     List<Patient> tempPatientList = [];
+    
     for (var item in data) {
-      tempPatientList.add(Patient(item['firstname'], item['pid'], item['profilepic']));
+      // Ensure the keys exist and are not null before accessing
+      String username = item['firstname'] ?? 'Unknown User'; // Provide a default value
+      String pid = item['pid'] ?? '0'; // Provide a default value
+      String profilepic = item['profilepic'] ?? '/images/image.png'; // Use a default image
+
+      tempPatientList.add(Patient(username, pid, profilepic));
     }
+    
     setState(() {
       patientList = tempPatientList;
       filteredList = patientList;
     });
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading : false,
         iconTheme: IconThemeData(
           color : Colors.white,
         ),
@@ -189,16 +200,30 @@ class _doctorhomeState extends State<doctorhome> {
         ),
         centerTitle: true,
         backgroundColor: appcolor,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.logout),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => loginselection()), 
+              );
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [
           Image.asset(
-            'assets/homeimage.jpg', // Replace 'your_image_asset.png' with your image asset path
+            'assets/homeimage.jpg', 
             width: double.infinity,
             fit: BoxFit.cover,
           ),
-          Expanded(
+          SizedBox(height: 10), 
+          Padding(
+            padding: const EdgeInsets.all(8.0),
             child: ListView.builder(
+              shrinkWrap: true, 
               itemCount: filteredList.length,
               itemBuilder: (context, index) {
                 return MyWidget(

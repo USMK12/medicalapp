@@ -2,11 +2,10 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
+import 'package:medicalapp/bottomnav.dart';
+import 'package:medicalapp/editprofile.dart';
 import 'package:medicalapp/ip.dart';
-
-
 import 'package:sizer/sizer.dart';
 
 class viewprofile extends StatefulWidget {
@@ -30,33 +29,75 @@ class _viewprofileState extends State<viewprofile> {
 
   Uint8List? _profileImage;
 
-  // Function to fetch user details from PHP API
   Future<void> fetchUserDetails() async {
     final response = await http.post(
       Uri.parse(profileuri),
-      body: {'id': widget.pid}, // Replace with actual username
+      headers: {'Content-Type': 'application/json'}, // Specify JSON content type
+      body: jsonEncode({'id': widget.pid}), // Send JSON data
     );
+    print('Response Status Code: ${response.statusCode}');
+    print('Response Body: ${response.body}');
 
     if (response.statusCode == 200) {
-      final Map<String, dynamic> userData = jsonDecode(response.body);
-      setState(() {
-        _pid = userData['pid'];
-        _firstname = userData['firstname'];
-        _lastname = userData['lastname'];
-        _dob = userData['dob'];
-        _gender = userData['gender'];
-        _height = userData['height'];
-        _weight = userData['weight'];
-        _bloodGroup = userData['bloodgroup'];
-        _phone = userData['phone'];
-      });
+      try {
+        final Map<String, dynamic> userData = jsonDecode(response.body);
+        setState(() {
+          _pid = userData['pid'] ?? '';
+          _firstname = userData['firstname'] ?? '';
+          _lastname = userData['lastname'] ?? '';
+          _dob = userData['dob'] ?? '';
+          _gender = userData['gender'] ?? '';
+          _height = userData['height'] ?? '';
+          _weight = userData['weight'] ?? '';
+          _bloodGroup = userData['bloodgroup'] ?? '';
+          _phone = userData['phone'] ?? '';
+        });
+      } catch (e) {
+        print('JSON Decode Error: $e');
+      }
     } else {
-      throw Exception('Failed to load user details');
+      print('Failed to load user details. Status Code: ${response.statusCode}');
     }
   }
 
-  // Function to fetch profile image
-  
+
+  Future<bool> deleteProfile() async {
+    final response = await http.post(
+      Uri.parse(deleteUri),
+      body: {'pid': _pid},
+    );
+
+    print('Response body: ${response.body}'); // Debugging line
+
+    if (response.statusCode == 200) {
+      try {
+        final Map<String, dynamic> responseBody = jsonDecode(response.body);
+        if (responseBody['success']) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Profile deleted successfully')),
+          );
+          Navigator.pop(context);
+          
+          
+          return true;
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to delete profile')),
+          );
+        }
+      } catch (e) {
+        print('JSON Decode Error: $e'); // Additional debugging line
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Invalid response from server')),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${response.statusCode}')),
+      );
+    }
+    return false;
+  }
 
   @override
   void initState() {
@@ -69,9 +110,12 @@ class _viewprofileState extends State<viewprofile> {
     return Scaffold(
       appBar: AppBar(
         iconTheme: IconThemeData(
-          color : Colors.white,
+          color: Colors.white,
         ),
-        title: Text('Patient Detail',style: TextStyle(fontWeight: FontWeight.bold,color: Colors.white),),
+        title: Text(
+          'Patient Detail',
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        ),
         backgroundColor: appcolor,
       ),
       body: SingleChildScrollView(
@@ -83,15 +127,15 @@ class _viewprofileState extends State<viewprofile> {
               Center(
                 child: Stack(
                   children: <Widget>[
-                    _profileImage != ""
+                    _profileImage != null
                         ? CircleAvatar(
                             radius: 80,
-                            backgroundImage:  AssetImage('assets/image 7.png'),
+                            backgroundColor: appcolor,
+                            backgroundImage: AssetImage('assets/image 7.png'),
                           )
                         : const CircleAvatar(
                             radius: 80,
-                            backgroundImage:
-                                AssetImage('assets/image 7.png'),
+                            backgroundImage: AssetImage('assets/image 7.png'),
                           ),
                   ],
                 ),
@@ -108,256 +152,101 @@ class _viewprofileState extends State<viewprofile> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Patient ID',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          Text(
-                            ':',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          Text(
-                            '$_pid',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
+                      buildRow('Patient ID', _pid),
                       SizedBox(height: 20),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'First Name',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          Text(
-                            ':',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          Text(
-                            '$_firstname',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
+                      buildRow('First Name', _firstname),
                       SizedBox(height: 20),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Lastname',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          Text(
-                            ':',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          Text(
-                            '$_lastname',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
+                      buildRow('Lastname', _lastname),
                       SizedBox(height: 20),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Gender',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          Text(
-                            ':',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          Text(
-                            '$_gender',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
+                      buildRow('Gender', _gender),
                       SizedBox(height: 20),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Height',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          Text(
-                            ':',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          Text(
-                            '$_height',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
+                      buildRow('Height', _height),
                       SizedBox(height: 20),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Weight',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          Text(
-                            ':',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          Text(
-                            '$_weight',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
+                      buildRow('Weight', _weight),
                       SizedBox(height: 20),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Blood Group',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          Text(
-                            ':',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          Text(
-                            '$_bloodGroup',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
+                      buildRow('Blood Group', _bloodGroup),
                       SizedBox(height: 20),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Contact',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          Text(
-                            ':',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          Text(
-                            '$_phone',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
+                      buildRow('Contact', _phone),
                     ],
                   ),
                 ),
               ),
-              SizedBox(
-                height: 30,
+              SizedBox(height: 75),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => editprofile(pid: _pid),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: appcolor,
+                      padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: Text(
+                      'Edit Profile',
+                      style: TextStyle(fontSize: 18, color: Colors.white),
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: () async {
+                      bool success = await deleteProfile(); // Update deleteProfile to return a boolean
+
+                      if (success) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => botnav()),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: Text(
+                      'Delete Profile',
+                      style: TextStyle(fontSize: 18, color: Colors.white),
+                    ),
+                  ),
+
+                ],
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget buildRow(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
     );
   }
 }

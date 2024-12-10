@@ -1,89 +1,46 @@
 <?php
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Establish the database connection
-    $servername = "localhost";
-    $username_db = "root";
-    $password_db = "";
-    $dbname = "braindata"; // Replace with your actual database name
-    $conn = new mysqli($servername, $username_db, $password_db, $dbname);
-    if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
-    }
+include 'conn.php';
 
-    // Query to count patients by status and score range
-    $sql = "SELECT 
-    ranges.score,
-    COALESCE(p_alive.count, 0) AS alive_count,
-    COALESCE(p_dead.count, 0) AS dead_count
-FROM 
-    (SELECT '0-10' AS score
-    UNION ALL SELECT '10-20'
-    UNION ALL SELECT '20-30'
-    UNION ALL SELECT '30-40'
-    UNION ALL SELECT '40-50'
-    UNION ALL SELECT '50-60'
-    UNION ALL SELECT '60+') AS ranges
-LEFT JOIN 
-    (SELECT 
+// SQL query to get the count of alive and dead patients, grouped by score
+$sql = "
+    SELECT 
         CASE 
-            WHEN score >= 0 AND score < 10 THEN '0-10'
-            WHEN score >= 10 AND score < 20 THEN '10-20'
-            WHEN score >= 20 AND score < 30 THEN '20-30'
-            WHEN score >= 30 AND score < 40 THEN '30-40'
-            WHEN score >= 40 AND score < 50 THEN '40-50'
-            WHEN score >= 50 AND score < 60 THEN '50-60'
-            ELSE '60+'
-        END AS score,
-        patientstatus,
-        COUNT(*) AS count
-    FROM 
-        patientdata
-    WHERE
-        patientstatus = 'alive'
-    GROUP BY 
-        score, patientstatus) AS p_alive
-ON 
-    ranges.score = p_alive.score
-LEFT JOIN 
-    (SELECT 
-        CASE 
-            WHEN score >= 0 AND score < 10 THEN '0-10'
-            WHEN score >= 10 AND score < 20 THEN '10-20'
-            WHEN score >= 20 AND score < 30 THEN '20-30'
-            WHEN score >= 30 AND score < 40 THEN '30-40'
-            WHEN score >= 40 AND score < 50 THEN '40-50'
-            WHEN score >= 50 AND score < 60 THEN '50-60'
-            ELSE '60+'
-        END AS score,
-        patientstatus,
-        COUNT(*) AS count
-    FROM 
-        patientdata
-    WHERE
-        patientstatus = 'dead'
-    GROUP BY 
-        score, patientstatus) AS p_dead
-ON 
-    ranges.score = p_dead.score
-GROUP BY 
-    ranges.score, COALESCE(p_alive.count, 0), COALESCE(p_dead.count, 0);";
+            WHEN score = 0 THEN '0%-10%'
+            WHEN score = 1 THEN '0%-10%'
+            WHEN score = 2 THEN '10%-20%'
+            WHEN score = 3 THEN '20%-30%'
+            WHEN score = 4 THEN '30%-40%'
+            WHEN score = 5 THEN '40%-50%'
+            WHEN score = 6 THEN '50%-60%'
+            ELSE '70%+'  -- For any score greater than 6
+        END AS score_range,
+        COUNT(CASE WHEN patientstatus = 'alive' THEN 1 END) AS alive_count,
+        COUNT(CASE WHEN patientstatus = 'dead' THEN 1 END) AS dead_count
+    FROM patientdata
+    GROUP BY score_range"; // Adjust the table name and column names as needed
 
-    $result = $conn->query($sql);
-    if ($result->num_rows > 0) {
-        // Fetch the data
-        $patientCount = array();
-        while ($row = $result->fetch_assoc()) {
-            $patientCount[] = $row;
-        } 
-        // Convert the array to a JSON string
-        echo json_encode($patientCount);
-    } else {
-        // No patients found
-        $response['status'] = 'failure';
-        $response['message'] = 'No patients found';
-        echo json_encode($response);
+$result = $conn->query($sql);
+
+$data = array();
+
+if ($result->num_rows > 0) {
+    // Fetch data for each row
+    while($row = $result->fetch_assoc()) {
+        $data[] = array(
+            "score_range" => $row["score_range"],
+            "alive_count" => $row["alive_count"],
+            "dead_count" => $row["dead_count"]
+        );
     }
-    // Close the database connection
-    $conn->close();
+} else {
+    echo json_encode(["error" => "No data found"]);
+    exit; // Use exit to stop further processing if no data is found
 }
+
+// Return data as JSON
+header('Content-Type: application/json');
+echo json_encode($data);
+
+// Close connection
+$conn->close();
 ?>

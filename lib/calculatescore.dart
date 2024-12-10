@@ -24,7 +24,7 @@ class _CalculateScreenState extends State<CalculateScreen> {
     final screenSize = MediaQuery.of(context).size;
 
     return GestureDetector(
-      // Handle gestures for moving the background image
+      
       onPanStart: (details) {
         _lastOffset = details.localPosition;
       },
@@ -51,7 +51,7 @@ class _CalculateScreenState extends State<CalculateScreen> {
         ),
         body: Stack(
           children: [
-            // Background image file with transform
+            
             if (widget.imageFile != null)
               Center(
                 child: Transform.rotate(
@@ -60,7 +60,7 @@ class _CalculateScreenState extends State<CalculateScreen> {
                     boundaryMargin: EdgeInsets.all(double.infinity),
                     transformationController: _transformationController,
                     onInteractionUpdate: (details) {
-                      // No need to setState here for zoom
+                      
                     },
                     child: Image.file(
                       widget.imageFile!,
@@ -72,33 +72,33 @@ class _CalculateScreenState extends State<CalculateScreen> {
                 ),
               ),
 
-            // Fixed foreground image asset
+            
             Positioned.fill(
               child: Image.asset(
-                'assets/brain2.png', // Change this to your asset name
+                'assets/brain2.png', 
                 fit: BoxFit.fill,
               ),
             ),
 
-            // Slider for zoom
+            
             Positioned(
-              bottom: 0.0,
-              left: 50.0,
+              bottom: 10.0,
+              left: 10.0,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Text('Zoom'),
+                  Text('Zoom',style: TextStyle(fontWeight: FontWeight.bold),),
                   Slider(
                     value: _transformationController.value.getMaxScaleOnAxis(),
                     min: 0.1,
                     max: 5.0,
                     onChanged: (value) {
                       _transformationController.value = Matrix4.identity()
-                        ..translate(screenSize.width / 2, screenSize.height / 2) // Translate to center
-                        ..scale(value) // Scale
-                        ..translate(-screenSize.width / 2, -screenSize.height / 2); // Translate back
+                        ..translate(screenSize.width / 2, screenSize.height / 2)
+                        ..scale(value) 
+                        ..translate(-screenSize.width / 2, -screenSize.height / 2);
                     },
-                    activeColor: appcolor, // Changed slider active color
+                    activeColor: appcolor, 
                   ),
                 ],
               ),
@@ -109,25 +109,25 @@ class _CalculateScreenState extends State<CalculateScreen> {
               right: 10.0,
               top: 10.0,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Text('Rotate'),
+                  Text('Rotate',style: TextStyle(fontWeight: FontWeight.bold),),
                   Slider(
                     value: _rotationAngle,
                     min: -2 * 3.1415,
-                    max: 2 * 3.1415, // 2*pi to complete one full rotation
+                    max: 2 * 3.1415, 
                     onChanged: (value) {
                       setState(() {
                         _rotationAngle = value;
                       });
                     },
-                    activeColor: appcolor, // Changed slider active color
+                    activeColor: appcolor, 
                   ),
                 ],
               ),
             ),
 
-            // Elevated button
+            
             Positioned(
               bottom: 20.0,
               right: 20.0,
@@ -138,9 +138,9 @@ class _CalculateScreenState extends State<CalculateScreen> {
                     MaterialPageRoute(builder: (context) => values(pid: widget.pid)),
                   );
                 },
-                child: Text('Calculate',style: TextStyle(fontWeight: FontWeight.bold,color: Colors.black),),
+                child: Text('Calculate',style: TextStyle(fontWeight: FontWeight.bold,color: Colors.white),),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: appcolor, // Set button background color
+                  backgroundColor: appcolor, 
                 ),
               ),
             ),

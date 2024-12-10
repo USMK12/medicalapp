@@ -10,9 +10,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Navigation Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
+      
       home: botnav(),
     );
   }
@@ -42,7 +40,7 @@ class _botnavState extends State<botnav> {
         backgroundColor: Colors.white,
         selectedItemColor: appcolor,
         unselectedItemColor: Colors.grey,
-        
+        showUnselectedLabels: true,
         items: [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
@@ -50,14 +48,14 @@ class _botnavState extends State<botnav> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_add_alt_outlined),
-            label: 'addpatient',
+            label: 'Add Patient',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_2_sharp),
             label: 'Patient List',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person_2_sharp),
+            icon: Icon(Icons.bar_chart_rounded),
             label: 'Bar Chart',
           ),
         ],

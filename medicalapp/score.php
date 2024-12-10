@@ -1,5 +1,7 @@
 <?php
 
+include 'conn.php';
+
 // Check if the request method is POST
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
@@ -12,39 +14,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $midline = $data['midline'];
     $mass = $data['mass'];
     $intraventricular = $data['intraventricular'];
-
-    // Calculate score
+    
     $score = $bacil + $midline + $mass + $intraventricular;
 
-    // Database connection parameters
-    $servername = "localhost";
-    $username = "root";
-    $password = "";
-    $dbname = "braindata";
+    // Prepare and execute the SQL UPDATE query using prepared statements
+    $sql = "UPDATE patientdata SET score = ? WHERE pid = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ii", $score, $pid);
 
-    // Create connection
-    $conn = new mysqli($servername, $username, $password, $dbname);
-
-    // Check connection
-    if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
-    }
-
-    // Prepare and execute the SQL UPDATE query
-    $sql = "UPDATE patientdata SET score=$score WHERE pid=$pid";
-
-    if ($conn->query($sql) === TRUE) {
-        echo "Record updated successfully";
+    if ($stmt->execute()) {
+        echo json_encode(["status" => "success", "message" => "Record updated successfully"]);
     } else {
-        echo "Error updating record: " . $conn->error;
+        echo json_encode(["status" => "failure", "message" => "Error updating record: " . $stmt->error]);
     }
 
-    // Close connection
+    // Close the statement and the database connection
+    $stmt->close();
     $conn->close();
 } else {
     // Method not allowed
     http_response_code(405);
-    echo "Method Not Allowed";
+    echo json_encode(["status" => "failure", "message" => "Method Not Allowed"]);
 }
 
 ?>

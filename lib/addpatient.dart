@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
-import 'package:medicalapp/doctorhome.dart';
+import 'package:medicalapp/bottomnav.dart';
 import 'package:medicalapp/ip.dart';
 
 class addpatient extends StatefulWidget {
@@ -22,15 +22,28 @@ class _addpatientState extends State<addpatient> {
   DateTime? _selectedDate;
 
   void sendDataToServer() async {
-    // Extract the values from the controllers
+    
     String firstName = _firstNameController.text;
     String lastName = _lastNameController.text;
-    String dob = DateFormat('yyyy-MM-dd').format(_selectedDate!); // Format date of birth
+    String dob = DateFormat('yyyy-MM-dd').format(_selectedDate!); 
     String sex = _sexController.text;
     String height = _heightController.text;
     String weight = _weightController.text;
     String bloodGroup = _bloodGroupController.text;
     String phone = _phoneController.text;
+
+     if (firstName.isEmpty ||
+        lastName.isEmpty ||
+        dob.isEmpty ||
+        sex.isEmpty ||
+        height.isEmpty ||
+        weight.isEmpty ||
+        bloodGroup.isEmpty ||
+        phone.isEmpty) {
+          
+          print('Please fill in all fields');
+          return;
+        }
 
     var url = Uri.parse(registerurl);
     var response = await http.post(
@@ -51,9 +64,9 @@ class _addpatientState extends State<addpatient> {
       print('Data sent successfully');
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => doctorhome()), // Navigating to the Login screen
+        MaterialPageRoute(builder: (context) => botnav()), 
       );
-      // Handle navigation or other actions upon successful data submission
+      
     } else {
       print('Failed to send data. Error: ${response.reasonPhrase}');
     }
@@ -71,7 +84,7 @@ class _addpatientState extends State<addpatient> {
     if (pickedDate != null && pickedDate != _selectedDate) {
       setState(() {
         _selectedDate = pickedDate;
-        _dobController.text = DateFormat('yyyy-MM-dd').format(pickedDate); // Update date text field
+        _dobController.text = DateFormat('yyyy-MM-dd').format(pickedDate); 
       });
     }
   }
@@ -152,6 +165,7 @@ class TextWithInputField extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
+          
           label,
           style: TextStyle(
             fontSize: 18.0,

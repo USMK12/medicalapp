@@ -1,47 +1,41 @@
 <?php
+
+include 'conn.php';
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Decode the JSON data
     $json = file_get_contents('php://input');
     $data = json_decode($json, true);
 
-    if (isset($_POST["firstname"]) ){
-        $firstname = $_POST["firstname"];
-        $lastname = $_POST["lastname"];
-        $phone = $_POST["phone"];
-        $gender = $_POST["gender"]; 
-        $bloodgroup = $_POST["bloodgroup"];
-        $height = $_POST["height"];
-        $weight = $_POST["weight"];
-        $dob = $_POST["dob"];
-
-        // Establish the database connection
-        $servername = "localhost";
-        $username_db = "root";
-        $password_db = "";
-        $dbname = "braindata";
-
-        $conn = new mysqli($servername, $username_db, $password_db, $dbname);
-
-        if ($conn->connect_error) {
-            die("Connection failed: " . $conn->connect_error);
-        }
+    if (isset($data["firstname"])) {
+        $firstname = $data["firstname"];
+        $lastname = $data["lastname"];
+        $phone = $data["phone"];
+        $gender = $data["sex"]; 
+        $bloodgroup = $data["bloodgroup"];
+        $height = $data["height"];
+        $weight = $data["weight"];
+        $dob = $data["dob"];
 
         // Query to insert data into the database
-        $sql = "INSERT INTO patientdata ( firstname,lastname, phone, gender, bloodgroup,height,weight,dob,profilepic) VALUES ('$firstname', '$lastname','$phone', '$gender', '$bloodgroup','$height','$weight', '$dob','images/image.png')";
+        $sql = "INSERT INTO patientdata (firstname, lastname, phone, gender, bloodgroup, height, weight, dob, profilepic) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'images/image.png')";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("sssssiis", $firstname, $lastname, $phone, $gender, $bloodgroup, $height, $weight, $dob);
 
-        if ($conn->query($sql) === TRUE) {
+        if ($stmt->execute()) {
             $response['status'] = 'success';
             $response['message'] = 'Data inserted successfully';
         } else {
             $response['status'] = 'failure';
-            $response['error'] = $conn->error;
+            $response['error'] = $stmt->error;
         }
 
-        // Close the database connection
+        // Close the statement and the database connection
+        $stmt->close();
         $conn->close();
     } else {
         $response['status'] = 'failure';
-        $response['message'] = 'Username or password not provided';
+        $response['message'] = 'Required data not provided';
     }
 
     echo json_encode($response);

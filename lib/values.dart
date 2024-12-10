@@ -21,48 +21,48 @@ class _valuesState extends State<values> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(
-          iconTheme: IconThemeData(
-            color : Colors.white,
-          ),
-          title: Text('Calculate Score',style: TextStyle(fontWeight: FontWeight.bold,color: Colors.white),),
-          backgroundColor: appcolor,
+    return Scaffold(
+      appBar: AppBar(
+        iconTheme: IconThemeData(
+          color : Colors.white,
         ),
-        body: SingleChildScrollView(
-          child: Center(
-            child: Container(
-              width: 400,
-              height: 800,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(40),
-                color: appcolor,
+        title: Text('Calculate Score',style: TextStyle(fontWeight: FontWeight.bold,color: Colors.white),),
+        backgroundColor: appcolor,
+      ),
+      body: SingleChildScrollView(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildInputRow("Bacil Cisterns", bacilController),
+              _buildInputRow("Midline Shift", midlineController),
+              _buildInputRow("Epidual Mass Lesion", massController),
+              _buildInputRow("Intraventricular blood\n/Subarachnoid hemorrage", intraventricularController),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+
+                  sendDataToPHP();
+                  
+                  bacilController.clear();
+                  midlineController.clear();
+                  massController.clear();
+                  intraventricularController.clear();
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => score(pid: widget.pid)),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: appcolor, 
+                ),
+                child: Text(
+                  'Submit',
+                  style: TextStyle(color: Colors.white),
+                ),
               ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _buildInputRow("Bacil Cisterns", bacilController),
-                  _buildInputRow("Midline Shift", midlineController),
-                  _buildInputRow("Epidual Mass Lesion", massController),
-                  _buildInputRow("Intraventricular blood\n/Subarachnoid hemorrage", intraventricularController),
-                  SizedBox(height: 20), // Added space between input rows and button
-                  ElevatedButton(
-                    onPressed: () {
-                      sendDataToPHP();
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => score(pid : widget.pid)), // Navigating to the Login screen
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white, // Button background color
-                    ),
-                    child: Text('Submit',style: TextStyle(color: Colors.black),),
-                  ),
-                ],
-              ),
-            ),
+          
+            ],
           ),
         ),
       ),
@@ -71,8 +71,8 @@ class _valuesState extends State<values> {
 
   Widget _buildInputRow(String labelText, TextEditingController controller) {
     return Container(
-      height: 150,
-      padding: EdgeInsets.all(10),
+      height: 100,
+      padding: EdgeInsets.all(20),
       margin: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.grey[300],
@@ -82,13 +82,16 @@ class _valuesState extends State<values> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            labelText,
+            labelText, 
             style: TextStyle(fontSize: 20, color: Colors.black),
           ),
-          Expanded(
+          Container(
+            width: 70, 
+            
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(10),color: Colors.white, ),
             child: TextField(
               controller: controller,
-              textAlign: TextAlign.right,
+              textAlign: TextAlign.center,
               style: TextStyle(color: Colors.black),
               decoration: InputDecoration(
                 hintText: 'Enter ',
@@ -108,7 +111,7 @@ class _valuesState extends State<values> {
     String mass = massController.text;
     String intraventricular = intraventricularController.text;
 
-    String url = scoreurl; // Replace with your PHP script URL
+    String url = scoreurl; 
     Map<String, String> headers = {'Content-Type': 'application/json'};
     Map<String, dynamic> data = {
       'pid': widget.pid,
@@ -125,10 +128,10 @@ class _valuesState extends State<values> {
         body: json.encode(data),
       );
 
-      // Handle the response here if needed
+      
       print(response.body);
     } catch (error) {
-      // Handle error
+     
       print('Error: $error');
     }
   }

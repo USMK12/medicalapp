@@ -31,10 +31,10 @@ class Mywidget1 extends StatelessWidget {
         borderRadius: BorderRadius.circular(25),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2), // Shadow color
+            color: Colors.black.withOpacity(0.2), 
             spreadRadius: 3,
             blurRadius: 3,
-            offset: Offset(0, 2), // changes position of shadow
+            offset: Offset(0, 2), 
           ),
         ],
         color: appcolor,
@@ -51,7 +51,7 @@ class Mywidget1 extends StatelessWidget {
             child: CircleAvatar(
               radius: 30,
               backgroundColor: Colors.transparent,
-              backgroundImage: NetworkImage("http://"+ip+"/medicalapp/${profilepic}"),
+              backgroundImage: NetworkImage("http://" + ip + "/${profilepic}"),
             ),
           ),
           Column(
@@ -99,7 +99,7 @@ class Mywidget1 extends StatelessWidget {
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => uploadimage(pid: pid)), // Navigating to the Login screen
+                          MaterialPageRoute(builder: (context) => uploadimage(pid: pid)), 
                         );
                       },  
                       style: ElevatedButton.styleFrom(
@@ -141,9 +141,9 @@ class _patientListState extends State<patientList> {
   @override
   void initState() {
     super.initState();
-    // Update URL to the correct IP or domain with the enprofilepicoint for patient list
-    String url = "http://"+ip+"/medicalapp/patientlist.php";
-    makeRequest(url);
+    
+    //String url = "http://"+ip+"/medicalapp/patientlist.php";
+    makeRequest(patientlisturl);
   }
 
   Future<void> makeRequest(String url) async {
@@ -156,7 +156,7 @@ class _patientListState extends State<patientList> {
       }
     } catch (e) {
       print('Error: $e');
-      // Handle error gracefully (e.g., show a snackbar)
+      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error loading patient data'),
@@ -165,17 +165,22 @@ class _patientListState extends State<patientList> {
     }
   }
 
-  void parseResponse(String responseBody) {
-    List<dynamic> data = json.decode(responseBody);
-    List<Patient> tempPatientList = [];
-    for (var item in data) {
-      tempPatientList.add(Patient(item['firstname'], item['pid'],item['profilepic']));
-    }
-    setState(() {
-      patientList = tempPatientList;
-      filteredList = patientList; // Initialize filteredList with patientList
-    });
+ void parseResponse(String responseBody) {
+  List<dynamic> data = json.decode(responseBody);
+  List<Patient> tempPatientList = [];
+  for (var item in data) {
+    tempPatientList.add(Patient(
+      item['firstname'] ?? 'Unknown',  // Fallback if null
+      item['pid'] ?? '',               // Ensure pid is not null
+      item['profilepic'] ?? '/images/image.png'  // Fallback to default image if null
+    ));
   }
+  setState(() {
+    patientList = tempPatientList;
+    filteredList = patientList;
+  });
+}
+
 
   void filterPatientList(String searchText) {
     List<Patient> tempFilteredList = [];
