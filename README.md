@@ -1,4 +1,4 @@
-# medicalapp
+# prognosis calculator app
 
 A new Flutter project.
 
